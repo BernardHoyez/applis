@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPX/KML Viewer PWA</title>
+    <!-- Inclure la librairie Leaflet pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Inclure les plugins pour les fichiers GPX et KML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+    <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        #map {
+            width: 100%;
+            height: calc(100vh - 120px); /* Ajuste la hauteur de la carte */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .container {
+            max-width: 1000px;
+        }
+        .file-label {
+            cursor: pointer;
+            border: 2px dashed #9ca3af;
+            background-color: #e5e7eb;
+            transition: all 0.3s;
+        }
+        .file-label:hover {
+            border-color: #4f46e5;
+            background-color: #eff6ff;
+        }
+        .hidden-file-input {
+            display: none;
+        }
+        .message-box {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center p-4 min-h-screen">
+
+    <div class="container mx-auto p-4 bg-white rounded-xl shadow-lg mt-8">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-4">Visualiseur de tracés GPX/KML</h1>
+        <p class="text-gray-600 text-center mb-6">
+            Sélectionnez un fichier GPX ou KML pour afficher le tracé sur la carte.
+        </p>
+
+        <div class="flex flex-col items-center space-y-4">
+            <input type="file" id="file-input" class="hidden-file-input" accept=".gpx,.kml,.kmz">
+            <label for="file-input" class="file-label flex flex-col items-center justify-center w-full md:w-2/3 p-6 rounded-lg text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414L9 2.586a1 1 0 011.414 0l2.707 2.707a1 1 0 01-1.414 1.414L10 4.414l-2.293 2.293a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M10 11a1 1 0 01-1-1V3a1 1 0 112 0v7a1 1 0 01-1 1z" clip-rule="evenodd" />
+                </svg>
+                <span class="mt-2 text-lg font-semibold">Cliquer pour sélectionner un fichier</span>
+                <span class="text-sm text-gray-400">Fichiers supportés : .gpx, .kml</span>
+            </label>
+            <div id="loading-indicator" class="hidden text-indigo-600 font-medium">
+                Chargement du tracé...
+            </div>
+        </div>
+
+        <div id="map" class="mt-6 rounded-xl"></div>
+    </div>
+    
+    <div id="message-box" class="message-box hidden p-4 rounded-lg text-white bg-red-500 shadow-xl transition-all duration-300">
+        Une erreur est survenue lors de la lecture du fichier.
+    </div>
+
+    <script>
+        // Enregistrement du Service Worker pour la compatibilité PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then(registration => {
+                    console.log('Service Worker enregistré avec succès:', registration.scope);
+                }).catch(err => {
+                    console.log('Échec de l\'enregistrement du Service Worker:', err);
+                });
+            });
+        }
+
+        const map = L.map('map').setView([46.603354, 1.888334], 6); // Centré sur la France
+
+        // Ajout des tuiles OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const fileInput = document.getElementById('file-input');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const messageBox = document.getElementById('message-box');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            loadingIndicator.classList.remove('hidden');
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const fileContent = event.target.result;
+                const fileName = file.name.toLowerCase();
+
+                let layer;
+                // Supprimer la couche précédente si elle existe
+                map.eachLayer(currentLayer => {
+                    if (currentLayer instanceof L.Marker || currentLayer instanceof L.Polyline) {
+                        map.removeLayer(currentLayer);
+                    }
+                });
+                
+                try {
+                    if (fileName.endsWith('.gpx')) {
+                        layer = new L.GPX(fileContent, {
+                            async: true,
+                            marker_options: {
+                                startIconUrl: null,
+                                endIconUrl: null,
+                                waypointIconUrl: null,
+                                shadowUrl: null,
+                                icon: L.icon({
+                                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                                    iconSize: [25, 41],
+                                    iconAnchor: [12, 41]
+                                })
+                            }
+                        }).on('loaded', function(e) {
+                            map.fitBounds(e.target.getBounds());
+                            loadingIndicator.classList.add('hidden');
+                        }).addTo(map);
+                    } else if (fileName.endsWith('.kml')) {
+                        const parser = new DOMParser();
+                        const kml = parser.parseFromString(fileContent, 'text/xml');
+                        layer = new L.KML(kml);
+                        layer.on('loaded', function(e) {
+                            map.fitBounds(e.target.getBounds());
+                            loadingIndicator.classList.add('hidden');
+                        }).addTo(map);
+                    } else {
+                        throw new Error('Type de fichier non supporté.');
+                    }
+                } catch (error) {
+                    console.error('Erreur de parsing du fichier:', error);
+                    loadingIndicator.classList.add('hidden');
+                    showMessage('Type de fichier non supporté ou fichier invalide.');
+                }
+            };
+
+            reader.onerror = (error) => {
+                console.error('Erreur de lecture du fichier:', error);
+                loadingIndicator.classList.add('hidden');
+                showMessage('Erreur de lecture du fichier.');
+            };
+
+            reader.readAsText(file);
+        });
+
+        // Fonction pour afficher des messages temporaires à l'utilisateur
+        function showMessage(msg) {
+            messageBox.textContent = msg;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
