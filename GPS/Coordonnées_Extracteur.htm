@@ -94,32 +94,12 @@
             text-align: left;
             margin-top: 1em;
         }
-
-        .map-button {
-            background-color: #4CAF50; /* Vert pour le bouton de la carte */
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-            border: none;
-            text-align: center;
-            display: none; /* Initialement caché */
-            margin-top: 1em;
-            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
-        }
-
-        .map-button:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🔍 Lecteur de Coordonnées EXIF</h1>
+        <h1>🔍 Coordonnées GPS d'une photo</h1>
         <div class="button-container">
             <label for="fileInput" id="fileInputLabel">Sélectionner une photo</label>
             <input type="file" id="fileInput" accept="image/*">
@@ -135,10 +115,6 @@
             <p><strong>Minutes décimales :</strong> <span id="min-decimal-coords"></span></p>
             <p id="error-message" class="error"></p>
         </div>
-
-        <button id="show-map-button" class="map-button">
-            Voir sur la carte 🗺️
-        </button>
     </div>
 
     <script>
@@ -151,8 +127,6 @@
         }
     </script>
     <script>
-        let globalCoords = null;
-
         document.getElementById('fileInput').addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -167,18 +141,14 @@
 
                         if (exif && exif.GPSLatitude && exif.GPSLongitude) {
                             const coords = extractAndConvertGPS(exif);
-                            globalCoords = coords; // Sauvegarde des coordonnées
                             displayResults(coords);
-                            document.getElementById('show-map-button').style.display = 'block';
                         } else {
-                            globalCoords = null;
+                            // Message d'erreur mis à jour pour être plus explicite
                             displayError("Aucune donnée GPS EXIF n'a été trouvée dans cette image. Pour les appareils Android, veuillez sélectionner une photo directement depuis le dossier DCIM.");
-                            document.getElementById('show-map-button').style.display = 'none';
                         }
                     } catch (err) {
                         console.error("Erreur lors de la lecture des EXIF:", err);
                         displayError("Erreur lors de la lecture des données EXIF. Le fichier est peut-être corrompu ou d'un format non supporté.");
-                        document.getElementById('show-map-button').style.display = 'none';
                     } finally {
                         URL.revokeObjectURL(url);
                     }
@@ -186,17 +156,8 @@
                 .catch(err => {
                     console.error("Erreur de lecture du fichier:", err);
                     displayError("Impossible de lire le fichier. Veuillez vérifier qu'il s'agit bien d'une image.");
-                    document.getElementById('show-map-button').style.display = 'none';
                     URL.revokeObjectURL(url);
                 });
-        });
-
-        document.getElementById('show-map-button').addEventListener('click', () => {
-            if (globalCoords) {
-                // Utilisation de l'URL Google Maps avec les coordonnées décimales
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${globalCoords.latitude},${globalCoords.longitude}`;
-                window.open(mapUrl, '_blank');
-            }
         });
 
         function displayResults(coords) {
@@ -220,7 +181,6 @@
             document.getElementById('decimal-coords').textContent = '';
             document.getElementById('min-decimal-coords').textContent = '';
             document.getElementById('error-message').textContent = message;
-            document.getElementById('show-map-button').style.display = 'none';
         }
         
         function toDMS(decimal, ref) {
