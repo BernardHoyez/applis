@@ -1,0 +1,5 @@
+{
+  "name": "GeoPhoto CSV pour Google Earth",
+  "description": "Une application PWA qui se connecte à votre Google Drive, lit les données de géolocalisation de vos photos et génère un fichier CSV compatible avec Google Earth Pro pour visualiser vos photos sur une carte.",
+  "requestFramePermissions": []
+}
