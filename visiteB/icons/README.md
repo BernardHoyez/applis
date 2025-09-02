@@ -1,1 +1,0 @@
-Placez vos icônes ici, par exemple icon-192.png et icon-512.png.
