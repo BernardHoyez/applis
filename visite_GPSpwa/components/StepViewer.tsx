@@ -1,0 +1,131 @@
+import React from 'react';
+import { Step } from '../types';
+import { ClearIcon } from './icons';
+
+interface StepViewerProps {
+  step: Step;
+  isEditorMode: boolean;
+  onUpdateStep: (updatedStep: Step) => void;
+  onFileChange: (stepId: string, field: 'image' | 'video' | 'audio' | 'thumbnail', file: File | null) => void;
+}
+
+const FileInput: React.FC<{
+    label: string;
+    field: 'image' | 'video' | 'audio' | 'thumbnail';
+    accept: string;
+    step: Step;
+    onFileChange: (stepId: string, field: 'image' | 'video' | 'audio' | 'thumbnail', file: File | null) => void;
+}> = ({ label, field, accept, step, onFileChange }) => {
+    const fileInputId = `${field}-${step.id}`;
+    const hasFile = step[field];
+
+    return (
+        <div className="flex items-center space-x-2">
+            <label htmlFor={fileInputId} className="flex-grow bg-gray-600 hover:bg-gray-500 text-white text-sm font-semibold py-2 px-3 rounded-md cursor-pointer transition-colors text-center">
+                {hasFile ? "Changer" : "Choisir"} {label}
+            </label>
+            <input
+                type="file"
+                id={fileInputId}
+                accept={accept}
+                className="hidden"
+                onChange={(e) => onFileChange(step.id, field, e.target.files?.[0] ?? null)}
+            />
+            {hasFile && (
+                 <button 
+                    onClick={() => onFileChange(step.id, field, null)} 
+                    className="p-2 bg-red-600 hover:bg-red-700 rounded-full text-white transition-colors"
+                    title={`Retirer ${label}`}
+                >
+                    <ClearIcon />
+                </button>
+            )}
+        </div>
+    );
+};
+
+
+const StepViewer: React.FC<StepViewerProps> = ({ step, isEditorMode, onUpdateStep, onFileChange }) => {
+  const handleInputChange = <K extends keyof Step>(
+    field: K,
+    value: Step[K]
+  ) => {
+    onUpdateStep({ ...step, [field]: value });
+  };
+
+  const renderMedia = () => {
+    // Priorité: Vidéo > Audio > Image
+    if (step.video) {
+        return <video key={step.video} src={step.video} poster={step.image} controls autoPlay muted loop className="w-full h-full object-cover absolute inset-0" />;
+    }
+    if (step.audio) {
+        return (
+            <>
+                {step.image && <img key={step.image} src={step.image} alt={step.title} className="w-full h-full object-cover absolute inset-0 opacity-70" />}
+                <audio key={step.audio} src={step.audio} controls className="absolute bottom-5 left-5 right-5 w-[calc(100%-2.5rem)] z-10" />
+            </>
+        );
+    }
+    if (step.image) {
+        return (
+            <img
+                key={step.image}
+                src={step.image}
+                alt={step.title}
+                className="w-full h-full object-cover absolute inset-0"
+                onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1280x720/1a202c/ffffff?text=Image+introuvable';
+                }}
+            />
+        );
+    }
+    return <div className="w-full h-full bg-gray-800 flex items-center justify-center"><p className="text-gray-500">Aucun média sélectionné</p></div>;
+  };
+
+  return (
+    <div className="flex-grow w-full h-full relative">
+      {renderMedia()}
+      <div className="absolute inset-0 bg-black/50"></div>
+      
+      <div className="absolute inset-0 p-8 flex flex-col justify-end text-white z-10">
+        {isEditorMode ? (
+          <div className="bg-black/60 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-1">Titre de l'étape</label>
+              <input
+                id="title"
+                type="text"
+                value={step.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md p-2 text-2xl font-bold focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+              <textarea
+                id="description"
+                value={step.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                rows={3}
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-md p-2 text-lg focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <FileInput label="Image / Poster" field="image" accept="image/*" step={step} onFileChange={onFileChange} />
+                <FileInput label="Miniature" field="thumbnail" accept="image/*" step={step} onFileChange={onFileChange} />
+                <FileInput label="Vidéo" field="video" accept="video/*" step={step} onFileChange={onFileChange} />
+                <FileInput label="Audio" field="audio" accept="audio/*" step={step} onFileChange={onFileChange} />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-black/40 backdrop-blur-sm p-6 rounded-lg max-w-2xl w-full">
+            <h1 className="text-4xl font-bold drop-shadow-lg">{step.title}</h1>
+            <p className="mt-4 text-xl text-gray-200 drop-shadow-md">{step.description}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StepViewer;

@@ -1,0 +1,5 @@
+{
+  "name": "Virtual Tour PWA",
+  "description": "A Progressive Web App to create and view virtual tours. This application features an editor to add, remove, and reorder tour steps, and a viewer to experience the created tour. Users can export their tour data.",
+  "requestFramePermissions": []
+}
