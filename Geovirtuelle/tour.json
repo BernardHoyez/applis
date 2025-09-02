@@ -1,0 +1,29 @@
+{
+  "tour": [
+    {
+      "id": "step-1756827977942",
+      "title": "Le Tilleul",
+      "description": "Passage Cénomanien à Turonien",
+      "image": "./assets/IMG_20250405_085521.jpg",
+      "thumbnail": "",
+      "audio": "./assets/Diapo01_Muraille_2024_10_07_22_41_41_1.mp3"
+    },
+    {
+      "id": "step-1",
+      "title": "Fécamp",
+      "description": "Déplacez vous en 43.46544 6.5667  et regardez",
+      "image": "./assets/Orival_YvesDSCN0520_4937bis.jpg",
+      "thumbnail": "./assets/hall_thumb.jpg",
+      "audio": "./assets/Diapo02_éboulement du 15 juillet_2024_10_07_22_55_43_1.mp3"
+    },
+    {
+      "id": "step-2",
+      "title": "Étape 2: La Salle d'Exposition",
+      "description": "Cette salle présente des œuvres d'art uniques. Chaque pièce raconte une histoire. Utilisez le bandeau en bas pour naviguer ou modifier la visite.",
+      "image": "./assets/expo.jpg",
+      "thumbnail": "./assets/expo_thumb.jpg",
+      "video": "",
+      "audio": ""
+    }
+  ]
+}
