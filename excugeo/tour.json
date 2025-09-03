@@ -1,0 +1,29 @@
+{
+  "tour": [
+    {
+      "id": "step-1",
+      "title": "Etretat",
+      "description": "Site",
+      "image": "./assets/IMG_20241212_120908.jpg",
+      "thumbnail": "./assets/thumb_IMG_20241212_120908.jpg"
+    },
+    {
+      "id": "step-2",
+      "title": "L'Arche d'Aval",
+      "description": "Emblématique",
+      "image": "./assets/DSCN4202_14jan_2015_interprétation_6déc_2020.jpg",
+      "thumbnail": "./assets/thumb_DSCN4202_14jan_2015_interprétation_6déc_2020.jpg",
+      "video": "",
+      "audio": "./assets/Diapo43c_Dessin des falaises_2024_10_11_15_41_40_1.mp3"
+    },
+    {
+      "id": "step-1756888047891",
+      "title": "Fossile",
+      "description": "Fagesia",
+      "image": "",
+      "thumbnail": "",
+      "video": "./assets/VID_20241212_160922_Fagesia sur HG Antifer 3c.mp4",
+      "audio": ""
+    }
+  ]
+}
